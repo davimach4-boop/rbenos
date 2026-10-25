@@ -1,0 +1,35 @@
+name: Construir RbenOS
+
+on:
+  workflow_dispatch:   # botao "Run workflow" no GitHub
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar ferramentas
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debootstrap parted dosfstools e2fsprogs xz-utils
+
+      - name: Construir imagem
+        run: |
+          chmod +x build-rbenos.sh
+          sudo ./build-rbenos.sh
+
+      - name: Comprimir
+        run: |
+          sudo chown $USER rbenos.img
+          xz -T0 -9 rbenos.img
+
+      - name: Guardar para download
+        uses: actions/upload-artifact@v4
+        with:
+          name: rbenos-img
+          path: rbenos.img.xz
+          retention-days: 30
